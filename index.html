@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexCraft Retro Fix</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NexCraft Retro</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="ui-overlay">
-        <div id="stats-bars">
-            <div class="bar-row">❤️ <div class="bar-bg"><div id="hp-fill" style="width:100%"></div></div></div>
-            <div class="bar-row">🍗 <div class="bar-bg"><div id="food-fill" style="width:80%"></div></div></div>
-        </div>
-    </div>
 
-    <div id="controls">
-        <div id="move-btns">
-            <button id="btn-left" class="joy-btn">◀</button>
-            <button id="btn-right" class="joy-btn">▶</button>
-        </div>
-        <div id="action-btns">
-            <button id="btn-mode" class="joy-btn mode-mine">⛏️</button>
-            <button id="btn-jump" class="joy-btn">▲</button>
-        </div>
+<div id="ui-overlay">
+    <div id="stats-bars">
+        <div class="bar-row">❤️ <div class="bar-bg"><div id="hp-fill" style="width:100%"></div></div></div>
+        <div class="bar-row">🍗 <div class="bar-bg"><div id="food-fill" style="width:80%"></div></div></div>
     </div>
+</div>
 
-    <div id="hotbar-fixed">
-        <div id="hotbar"></div>
+<div id="controls">
+    <div id="move-btns">
+        <button id="btn-left" class="joy-btn">◀</button>
+        <button id="btn-right" class="joy-btn">▶</button>
     </div>
+    <div id="action-btns">
+        <button id="btn-mode" class="joy-btn mode-mine">⛏️</button>
+        <button id="btn-jump" class="joy-btn">▲</button>
+    </div>
+</div>
 
-    <canvas id="gameCanvas"></canvas>
-    <script src="script.js"></script>
+<div id="hotbar-fixed">
+    <div id="hotbar"></div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- Rotation Lock -->
+<div id="rotate-warning">
+📱 Putar perangkat ke mode landscape
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
