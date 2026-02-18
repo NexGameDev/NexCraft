@@ -2,42 +2,46 @@ body, html {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden; background: #87CEEB;
-    touch-action: none; font-family: sans-serif;
+    touch-action: none;
 }
 
-#ui {
-    position: absolute; bottom: 20px;
-    width: 100%; display: flex;
-    justify-content: center; z-index: 10;
-    pointer-events: none;
+/* Kontroler Joystick & Tombol */
+#controls {
+    position: absolute; width: 100%; height: 100%;
+    pointer-events: none; z-index: 20;
 }
 
-#hotbar {
-    display: flex; gap: 8px;
-    background: rgba(0,0,0,0.6);
-    padding: 8px; border-radius: 5px;
-    pointer-events: all;
+#joystick-container {
+    position: absolute; bottom: 40px; left: 40px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.2); border-radius: 50%;
+    pointer-events: all; display: flex; align-items: center; justify-content: center;
 }
 
-.slot {
-    width: 45px; height: 45px;
-    border: 3px solid #333;
-    background-size: contain;
-    image-rendering: pixelated;
-    cursor: pointer;
+#joystick {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.5); border-radius: 50%;
 }
 
-.slot.active { border-color: #fff; transform: scale(1.1); }
+#action-buttons {
+    position: absolute; bottom: 40px; right: 40px;
+    display: flex; flex-direction: column; gap: 15px; pointer-events: all;
+}
 
+#btn-jump, #btn-mode {
+    width: 80px; height: 80px;
+    background: rgba(0,0,0,0.5); color: white;
+    border: 2px solid white; border-radius: 50%;
+    font-weight: bold; font-size: 12px;
+}
+
+#btn-mode { border-radius: 10px; height: 50px; background: #d32f2f; }
+
+/* Hotbar & Message */
+#ui { position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: center; pointer-events: none; }
+#hotbar { display: flex; gap: 5px; background: rgba(0,0,0,0.6); padding: 5px; pointer-events: all; }
+.slot { width: 40px; height: 40px; border: 2px solid #333; image-rendering: pixelated; background-size: cover; }
+.slot.active { border-color: white; transform: scale(1.1); }
+#rotate-message { display: none; position: fixed; top: 0; width: 100%; height: 100%; background: #222; color: #fff; z-index: 100; align-items: center; justify-content: center; }
+@media screen and (orientation: portrait) { #rotate-message { display: flex; } }
 canvas { display: block; image-rendering: pixelated; }
-
-#rotate-message {
-    display: none; position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: #222; color: #fff;
-    z-index: 100; align-items: center; justify-content: center;
-}
-
-@media screen and (orientation: portrait) {
-    #rotate-message { display: flex; }
-}
