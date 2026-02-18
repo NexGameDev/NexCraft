@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexCraft 2D - Textured Ver.</title>
+    <title>NexCraft 2D - Fixed</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="rotate-message">
-        Please Rotate Your Device 🔄
-    </div>
-
+    <div id="rotate-message">Gunakan Mode Landscape 🔄</div>
+    
     <div id="ui">
         <div id="hotbar">
-            <div class="slot active" data-block="2" style="background-image: url('https://i.imgur.com/XjI8k9b.png');"></div> <div class="slot" data-block="1" style="background-image: url('https://i.imgur.com/9Y3C4Qk.png');"></div> <div class="slot" data-block="4" style="background-image: url('https://i.imgur.com/F1Z6k2M.png');"></div> <div class="slot" data-block="3" style="background-image: url('https://i.imgur.com/Kk8Z2zZ.png');"></div> </div>
+            <div class="slot active" data-block="2" id="slot-grass"></div>
+            <div class="slot" data-block="1" id="slot-dirt"></div>
+            <div class="slot" data-block="3" id="slot-stone"></div>
+            <div class="slot" data-block="4" id="slot-wood"></div>
+        </div>
     </div>
-    
+
     <canvas id="gameCanvas"></canvas>
 
     <script src="script.js"></script>
 </body>
 </html>
-
