@@ -3,26 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexCraft 2D - Full Pixel Edition</title>
+    <title>NexCraft Retro Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="rotate-message">Gunakan Mode Landscape 🔄</div>
-    <div id="ui-overlay">
-        <div class="stats"><span id="hp">❤️❤️❤️❤️❤️</span> <span id="food">🍗🍗🍗🍗🍗</span></div>
+    <div id="rotate-warning">⚠️ Putar HP ke Landscape ⚠️</div>
+
+    <div id="hud">
+        <div class="stat-row">
+            <span>❤️</span>
+            <div class="bar-container"><div id="hp-bar" style="width: 100%;"></div></div>
+        </div>
+        <div class="stat-row">
+            <span>🍗</span>
+            <div class="bar-container"><div id="food-bar" style="width: 80%;"></div></div>
+        </div>
     </div>
+
     <div id="controls">
-        <div id="move-group">
-            <button id="btn-left" class="joy">◀</button>
-            <button id="btn-right" class="joy">▶</button>
+        <div id="dpad">
+            <button id="btn-left" class="btn pixel-btn">◀</button>
+            <button id="btn-right" class="btn pixel-btn">▶</button>
         </div>
-        <div id="action-group">
-            <button id="btn-mode">MINE ⛏️</button>
-            <button id="btn-jump" class="joy">▲</button>
+        <div id="actions">
+            <button id="btn-mode" class="btn pixel-btn mode-mine">⛏️</button>
+            <button id="btn-jump" class="btn pixel-btn">▲</button>
         </div>
     </div>
-    <div id="hotbar-container"><div id="hotbar"></div></div>
+
+    <div id="hotbar-wrapper">
+        <div id="hotbar"></div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
+
     <script src="script.js"></script>
 </body>
 </html>
