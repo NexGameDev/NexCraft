@@ -1,201 +1,215 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-const V_WIDTH = 320;
-let V_HEIGHT, TILE = 16, scaleFactor;
-let world = [], textures = {};
-let camX = 0, selectedBlock = 2, mode = 'MINE';
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-window.moveL = false;
-window.moveR = false;
-window.doJump = false;
+const TILE = 32;
+const WORLD_WIDTH = 400;
+const WORLD_HEIGHT = 80;
+const RENDER_DISTANCE = 30;
 
-let player = {
-    x: 80,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    w: 10,
-    h: 16,
-    grounded: false,
-    anim: 0
+let world = [];
+
+const player = {
+  x:0, y:0,
+  width:24, height:32,
+  vx:0, vy:0,
+  speed:3,
+  jump:-10,
+  gravity:0.5,
+  grounded:false
 };
 
-function init() {
+const camera = { x:0, y:0, smooth:0.1 };
 
-    const createT = (id, col, grass) => {
-        const t = document.createElement('canvas');
-        t.width = TILE;
-        t.height = TILE;
-        const c = t.getContext('2d');
+let inventory = { dirt:0, grass:0, wood:0 };
+let selectedBlock = "dirt";
 
-        c.fillStyle = col;
-        c.fillRect(0, 0, TILE, TILE);
+const keys = {};
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
 
-        for (let i = 0; i < 40; i++) {
-            c.fillStyle = `rgba(0,0,0,${Math.random()*0.15})`;
-            c.fillRect(Math.random()*TILE, Math.random()*TILE, 1, 1);
-        }
+// MOBILE CONTROL
+document.getElementById("left").ontouchstart=()=>keys["a"]=true;
+document.getElementById("left").ontouchend=()=>keys["a"]=false;
+document.getElementById("right").ontouchstart=()=>keys["d"]=true;
+document.getElementById("right").ontouchend=()=>keys["d"]=false;
+document.getElementById("jump").ontouchstart=()=>keys["w"]=true;
+document.getElementById("jump").ontouchend=()=>keys["w"]=false;
 
-        if (grass) {
-            c.fillStyle = '#4caf50';
-            c.fillRect(0, 0, TILE, 4);
-        }
+// WORLD GENERATE
+function generateWorld(){
+  for(let x=0;x<WORLD_WIDTH;x++){
+    world[x]=[];
+    let ground=40+Math.floor(Math.sin(x*0.15)*5);
 
-        textures[id] = t;
-    };
-
-    createT(1, '#8d6e63');
-    createT(2, '#8d6e63', true);
-    createT(3, '#757575');
-    createT(4, '#5d4037');
-
-    generateWorld();
-    resize();
-    setupHotbar();
-    requestAnimationFrame(loop);
-}
-
-function generateWorld() {
-    for (let x = 0; x < 150; x++) {
-        world[x] = [];
-        let h = 10 + Math.floor(Math.sin(x * 0.3) * 2);
-        for (let y = 0; y < 30; y++) {
-            if (y > h) world[x][y] = (y > h + 3) ? 3 : 1;
-            else if (y === h) world[x][y] = 2;
-            else world[x][y] = 0;
-        }
-    }
-}
-
-function solid(px, py) {
-    let gx = Math.floor(px / TILE);
-    let gy = Math.floor(py / TILE);
-    return world[gx] && world[gx][gy] > 0;
-}
-
-function update() {
-
-    player.vy += 0.4;
-    if (player.vy > 8) player.vy = 8;
-
-    if (moveL) player.vx = -2.5;
-    else if (moveR) player.vx = 2.5;
-    else player.vx *= 0.7;
-
-    if (doJump && player.grounded) {
-        player.vy = -7;
-        player.grounded = false;
+    for(let y=0;y<WORLD_HEIGHT;y++){
+      if(y>ground) world[x][y]=1;      // dirt
+      else if(y===ground) world[x][y]=2; // grass
+      else world[x][y]=0;              // air
     }
 
-    let nextX = player.x + player.vx;
-
-    if (
-        !solid(nextX, player.y + 2) &&
-        !solid(nextX + player.w, player.y + 2) &&
-        !solid(nextX, player.y + player.h - 2) &&
-        !solid(nextX + player.w, player.y + player.h - 2)
-    ) {
-        player.x = nextX;
-    } else player.vx = 0;
-
-    let nextY = player.y + player.vy;
-
-    if (player.vy > 0) {
-        if (
-            solid(player.x + 2, nextY + player.h) ||
-            solid(player.x + player.w - 2, nextY + player.h)
-        ) {
-            player.y = Math.floor((nextY + player.h) / TILE) * TILE - player.h;
-            player.vy = 0;
-            player.grounded = true;
-        } else {
-            player.y = nextY;
-            player.grounded = false;
-        }
-    } else if (player.vy < 0) {
-        if (
-            solid(player.x + 2, nextY) ||
-            solid(player.x + player.w - 2, nextY)
-        ) {
-            player.vy = 0;
-        } else player.y = nextY;
+    // TREE PROCEDURAL
+    if(Math.random()<0.1){
+      let h=3+Math.floor(Math.random()*3);
+      for(let t=1;t<=h;t++){
+        world[x][ground-t]=3; // wood
+      }
     }
-
-    camX = player.x - V_WIDTH / 2;
-    if (camX < 0) camX = 0;
-    if (camX > world.length * TILE - V_WIDTH)
-        camX = world.length * TILE - V_WIDTH;
-
-    if (Math.abs(player.vx) > 0.5 && player.grounded)
-        player.anim += 0.25;
+  }
 }
 
-function drawPlayer() {
-    const px = Math.floor(player.x);
-    const py = Math.floor(player.y);
-
-    ctx.fillStyle = '#ffcc99';
-    ctx.fillRect(px + 2, py, 6, 6);
-
-    ctx.fillStyle = '#00acc1';
-    ctx.fillRect(px + 2, py + 6, 6, 6);
-
-    ctx.fillStyle = '#3949ab';
-    let legOffset = Math.sin(player.anim) * 2;
-
-    ctx.fillRect(px + 2, py + 12, 3, 4 + legOffset);
-    ctx.fillRect(px + 5, py + 12, 3, 4 - legOffset);
-}
-
-function loop() {
-    update();
-
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.scale(scaleFactor, scaleFactor);
-    ctx.translate(-Math.floor(camX), 0);
-    ctx.imageSmoothingEnabled = false;
-
-    for (let x = Math.floor(camX / TILE);
-         x < Math.floor(camX / TILE) + (V_WIDTH / TILE) + 2;
-         x++) {
-
-        if (!world[x]) continue;
-
-        for (let y = 0; y < world[x].length; y++) {
-            if (world[x][y] > 0)
-                ctx.drawImage(textures[world[x][y]], x * TILE, y * TILE);
-        }
+function spawnPlayer(){
+  for(let y=0;y<WORLD_HEIGHT;y++){
+    if(world[20][y]===2){
+      player.x=20*TILE;
+      player.y=(y-1)*TILE;
+      break;
     }
-
-    drawPlayer();
-    ctx.restore();
-    requestAnimationFrame(loop);
+  }
 }
 
-function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    scaleFactor = canvas.width / V_WIDTH;
-    V_HEIGHT = canvas.height / scaleFactor;
+// PLAYER UPDATE
+function updatePlayer(){
+  if(keys["a"]) player.vx=-player.speed;
+  else if(keys["d"]) player.vx=player.speed;
+  else player.vx=0;
+
+  if(keys["w"] && player.grounded){
+    player.vy=player.jump;
+    player.grounded=false;
+  }
+
+  player.vy+=player.gravity;
+  player.x+=player.vx;
+  player.y+=player.vy;
+
+  checkCollision();
 }
 
-function checkOrientation() {
-    const warning = document.getElementById("rotate-warning");
-    if (window.innerHeight > window.innerWidth)
-        warning.style.display = "flex";
-    else {
-        warning.style.display = "none";
-        resize();
+function checkCollision(){
+  player.grounded=false;
+  let tileX=Math.floor(player.x/TILE);
+  let tileY=Math.floor((player.y+player.height)/TILE);
+
+  if(world[tileX] && world[tileX][tileY]>0){
+    player.y=tileY*TILE-player.height;
+    player.vy=0;
+    player.grounded=true;
+  }
+}
+
+// CAMERA FOLLOW
+function updateCamera(){
+  const targetX=player.x-canvas.width/2+player.width/2;
+  const targetY=player.y-canvas.height/2+player.height/2;
+
+  camera.x+=(targetX-camera.x)*camera.smooth;
+  camera.y+=(targetY-camera.y)*camera.smooth;
+}
+
+// DRAW BLOCK
+function drawBlock(type,x,y){
+  if(type===1){
+    ctx.fillStyle="#8B4513";
+    ctx.fillRect(x,y,TILE,TILE);
+  }
+  if(type===2){
+    ctx.fillStyle="#7cfc00";
+    ctx.fillRect(x,y,TILE,TILE);
+    ctx.fillStyle="#8B4513";
+    ctx.fillRect(x,y+TILE-6,TILE,6);
+  }
+  if(type===3){
+    ctx.fillStyle="#A0522D";
+    ctx.fillRect(x,y,TILE,TILE);
+  }
+}
+
+// CHUNK RENDER SYSTEM
+function drawWorld(){
+  let startX=Math.floor(camera.x/TILE)-1;
+  let endX=startX+RENDER_DISTANCE;
+
+  for(let x=startX;x<endX;x++){
+    if(!world[x]) continue;
+    for(let y=0;y<WORLD_HEIGHT;y++){
+      if(world[x][y]>0){
+        drawBlock(world[x][y],x*TILE,y*TILE);
+      }
     }
+  }
 }
 
-window.addEventListener("resize", checkOrientation);
-window.addEventListener("orientationchange", checkOrientation);
+// DRAW PLAYER
+function drawPlayer(){
+  ctx.fillStyle="#ffcc99";
+  ctx.fillRect(player.x,player.y,player.width,player.height-12);
+  ctx.fillStyle="#0000ff";
+  ctx.fillRect(player.x,player.y+20,player.width,12);
+}
 
-window.onresize = resize;
-checkOrientation();
-init();
+// MINING SYSTEM
+canvas.addEventListener("click",mineBlock);
+canvas.addEventListener("touchstart",e=>{
+  const touch=e.touches[0];
+  mineBlock(touch);
+});
+
+function mineBlock(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left+camera.x;
+  const my=e.clientY-rect.top+camera.y;
+
+  const tx=Math.floor(mx/TILE);
+  const ty=Math.floor(my/TILE);
+
+  if(!world[tx]) return;
+
+  if(world[tx][ty]>0){
+    if(world[tx][ty]===1) inventory.dirt++;
+    if(world[tx][ty]===2) inventory.grass++;
+    if(world[tx][ty]===3) inventory.wood++;
+    world[tx][ty]=0;
+  }
+
+  updateInventory();
+}
+
+// INVENTORY UI
+function updateInventory(){
+  const inv=document.getElementById("inventory");
+  inv.innerHTML="";
+  for(let item in inventory){
+    const slot=document.createElement("div");
+    slot.className="slot";
+    slot.innerHTML=item+"<br>"+inventory[item];
+    slot.onclick=()=>selectedBlock=item;
+    inv.appendChild(slot);
+  }
+}
+
+// LOOP
+function gameLoop(){
+  ctx.fillStyle="#87CEEB";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  updatePlayer();
+  updateCamera();
+
+  ctx.save();
+  ctx.translate(-camera.x,-camera.y);
+
+  drawWorld();
+  drawPlayer();
+
+  ctx.restore();
+
+  requestAnimationFrame(gameLoop);
+}
+
+generateWorld();
+spawnPlayer();
+updateInventory();
+gameLoop();
