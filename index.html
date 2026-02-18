@@ -3,23 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexCraft 2D - Fixed</title>
+    <title>NexCraft PE - Controller Update</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="rotate-message">Gunakan Mode Landscape 🔄</div>
     
+    <div id="controls">
+        <div id="joystick-container">
+            <div id="joystick"></div>
+        </div>
+        <div id="action-buttons">
+            <button id="btn-mode">MODE: MINE</button>
+            <button id="btn-jump">JUMP</button>
+        </div>
+    </div>
+
     <div id="ui">
         <div id="hotbar">
-            <div class="slot active" data-block="2" id="slot-grass"></div>
-            <div class="slot" data-block="1" id="slot-dirt"></div>
-            <div class="slot" data-block="3" id="slot-stone"></div>
-            <div class="slot" data-block="4" id="slot-wood"></div>
+            <div class="slot active" data-block="2"></div>
+            <div class="slot" data-block="1"></div>
+            <div class="slot" data-block="3"></div>
+            <div class="slot" data-block="4"></div>
         </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
-
     <script src="script.js"></script>
 </body>
 </html>
