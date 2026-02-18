@@ -3,33 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NexCraft 2D Ultimate</title>
+    <title>NexCraft 2D - Full Pixel Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="rotate-message">Gunakan Mode Landscape 🔄</div>
-    
-    <div id="status-bars">
-        <div id="health-bar">❤️❤️❤️❤️❤️</div>
-        <div id="hunger-bar">🍗🍗🍗🍗🍗</div>
+    <div id="ui-overlay">
+        <div class="stats"><span id="hp">❤️❤️❤️❤️❤️</span> <span id="food">🍗🍗🍗🍗🍗</span></div>
     </div>
-
     <div id="controls">
-        <div id="move-controls">
-            <button id="btn-left" class="ctrl-btn">◀</button>
-            <button id="btn-right" class="ctrl-btn">▶</button>
+        <div id="move-group">
+            <button id="btn-left" class="joy">◀</button>
+            <button id="btn-right" class="joy">▶</button>
         </div>
-        <div id="action-controls">
+        <div id="action-group">
             <button id="btn-mode">MINE ⛏️</button>
-            <button id="btn-jump" class="ctrl-btn">▲</button>
+            <button id="btn-jump" class="joy">▲</button>
         </div>
     </div>
-
-    <div id="ui">
-        <div id="hotbar">
-            </div>
-    </div>
-
+    <div id="hotbar-container"><div id="hotbar"></div></div>
     <canvas id="gameCanvas"></canvas>
     <script src="script.js"></script>
 </body>
