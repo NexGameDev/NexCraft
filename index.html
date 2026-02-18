@@ -3,39 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NexCraft Retro</title>
+<title>Minecraft 2D</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="ui-overlay">
-    <div id="stats-bars">
-        <div class="bar-row">❤️ <div class="bar-bg"><div id="hp-fill" style="width:100%"></div></div></div>
-        <div class="bar-row">🍗 <div class="bar-bg"><div id="food-fill" style="width:80%"></div></div></div>
-    </div>
+<canvas id="game"></canvas>
+
+<div class="controls">
+  <button id="left">◀</button>
+  <button id="jump">▲</button>
+  <button id="right">▶</button>
 </div>
 
-<div id="controls">
-    <div id="move-btns">
-        <button id="btn-left" class="joy-btn">◀</button>
-        <button id="btn-right" class="joy-btn">▶</button>
-    </div>
-    <div id="action-btns">
-        <button id="btn-mode" class="joy-btn mode-mine">⛏️</button>
-        <button id="btn-jump" class="joy-btn">▲</button>
-    </div>
-</div>
-
-<div id="hotbar-fixed">
-    <div id="hotbar"></div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-
-<!-- Rotation Lock -->
-<div id="rotate-warning">
-📱 Putar perangkat ke mode landscape
-</div>
+<div id="inventory"></div>
 
 <script src="script.js"></script>
 </body>
