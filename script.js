@@ -1,57 +1,36 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- CONFIG ---
 let TILE_SIZE, COLS, ROWS;
 const blocksTex = {};
 let selectedBlock = 2;
 let world = [];
+let interactionMode = 'MINE'; // MINE atau BUILD
 
-// --- 1. GENERATE TEXTURES ALGORITHMICALLY ---
-function createTexture(id, drawFn) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = tempCanvas.height = 16;
-    const tCtx = tempCanvas.getContext('2d');
-    drawFn(tCtx);
-    blocksTex[id] = tempCanvas;
-    
-    // Update Hotbar UI Preview
+// --- 1. TEXTURE ENGINE ---
+function createTexture(id, color, isSteve = false) {
+    const temp = document.createElement('canvas');
+    temp.width = temp.height = 16;
+    const tCtx = temp.getContext('2d');
+    tCtx.fillStyle = color; tCtx.fillRect(0,0,16,16);
+    if(!isSteve) {
+        tCtx.fillStyle = 'rgba(0,0,0,0.1)';
+        for(let i=0; i<4; i++) tCtx.fillRect(Math.random()*14, Math.random()*14, 2, 2);
+    }
+    blocksTex[id] = temp;
     const slot = document.querySelector(`.slot[data-block="${id}"]`);
-    if(slot) slot.style.backgroundImage = `url(${tempCanvas.toDataURL()})`;
+    if(slot) slot.style.backgroundImage = `url(${temp.toDataURL()})`;
 }
 
-function initTextures() {
-    // Dirt
-    createTexture(1, c => {
-        c.fillStyle = '#614126'; c.fillRect(0,0,16,16);
-        c.fillStyle = '#503521'; for(let i=0;i<5;i++) c.fillRect(Math.random()*14, Math.random()*14, 2, 2);
-    });
-    // Grass
-    createTexture(2, c => {
-        c.fillStyle = '#614126'; c.fillRect(0,0,16,16);
-        c.fillStyle = '#48ad39'; c.fillRect(0,0,16,6);
-        c.fillStyle = '#3a8e2e'; c.fillRect(0,5,16,2);
-    });
-    // Stone
-    createTexture(3, c => {
-        c.fillStyle = '#7a7a7a'; c.fillRect(0,0,16,16);
-        c.fillStyle = '#666'; for(let i=0;i<4;i++) c.fillRect(Math.random()*14, Math.random()*14, 3, 2);
-    });
-    // Wood
-    createTexture(4, c => {
-        c.fillStyle = '#6b4423'; c.fillRect(0,0,16,16);
-        c.fillStyle = '#4d321a'; c.fillRect(0,4,16,2); c.fillRect(0,10,16,2);
-    });
-    // Steve (Sprite)
-    createTexture('steve', c => {
-        c.fillStyle = '#00aaaa'; c.fillRect(4,8,8,8); // Body
-        c.fillStyle = '#dbac82'; c.fillRect(4,2,8,6);  // Head
-        c.fillStyle = '#3d2211'; c.fillRect(4,2,8,2);  // Hair
-        c.fillStyle = '#3c44aa'; c.fillRect(4,12,8,4); // Legs
-    });
+function initAssets() {
+    createTexture(1, '#614126'); // Dirt
+    createTexture(2, '#48ad39'); // Grass
+    createTexture(3, '#7a7a7a'); // Stone
+    createTexture(4, '#6b4423'); // Wood
+    createTexture('steve', '#00aaaa', true); // Steve
 }
 
-// --- 2. WORLD & PLAYER LOGIC ---
+// --- 2. PLAYER & PHYSICS ---
 let player = { x: 100, y: 0, vx: 0, vy: 0, w: 0, h: 0, grounded: false };
 
 function resize() {
@@ -68,70 +47,98 @@ function resize() {
 function generateWorld() {
     for (let x = 0; x < COLS; x++) {
         world[x] = [];
-        let gHeight = Math.floor(ROWS / 1.7);
+        let gh = Math.floor(ROWS / 1.7);
         for (let y = 0; y < ROWS; y++) {
-            if (y > gHeight) world[x][y] = (y > gHeight + 2) ? 3 : 1;
-            else if (y === gHeight) world[x][y] = 2;
+            if (y > gh) world[x][y] = 1;
+            else if (y === gh) world[x][y] = 2;
             else world[x][y] = 0;
         }
     }
 }
 
-// --- 3. INPUT & UPDATE ---
-const keys = {};
-window.onkeydown = e => keys[e.key.toLowerCase()] = true;
-window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+// --- 3. CONTROLLER LOGIC ---
+let joystickActive = false;
+const joystick = document.getElementById('joystick');
+const joystickContainer = document.getElementById('joystick-container');
 
+joystickContainer.addEventListener('touchstart', () => joystickActive = true);
+window.addEventListener('touchend', () => {
+    joystickActive = false;
+    player.vx = 0;
+    joystick.style.transform = `translate(0px, 0px)`;
+});
+
+window.addEventListener('touchmove', (e) => {
+    if (!joystickActive) return;
+    let touch = e.touches[0];
+    let rect = joystickContainer.getBoundingClientRect();
+    let centerX = rect.left + rect.width / 2;
+    let dist = touch.clientX - centerX;
+    
+    // Batasi gerak joystick
+    let move = Math.max(-40, Math.min(40, dist));
+    joystick.style.transform = `translateX(${move}px)`;
+    
+    // Set kecepatan Steve
+    player.vx = (move / 40) * 5;
+});
+
+document.getElementById('btn-jump').addEventListener('touchstart', () => {
+    if(player.grounded) { player.vy = -12; player.grounded = false; }
+});
+
+document.getElementById('btn-mode').addEventListener('click', () => {
+    interactionMode = interactionMode === 'MINE' ? 'BUILD' : 'MINE';
+    const btn = document.getElementById('btn-mode');
+    btn.innerText = `MODE: ${interactionMode}`;
+    btn.style.background = interactionMode === 'MINE' ? '#d32f2f' : '#388e3c';
+});
+
+// --- 4. GAME LOOP ---
 function update() {
-    // Horizontal Movement
-    if (keys['a']) player.vx = -5;
-    else if (keys['d']) player.vx = 5;
-    else player.vx *= 0.8;
-
-    player.vy += 0.5; // Gravity
+    player.vy += 0.6; // Gravity
     player.x += player.vx;
     player.y += player.vy;
 
-    // Basic Floor Collision
     let floorY = Math.floor(ROWS / 1.7) * TILE_SIZE;
     if (player.y + player.h > floorY) {
         player.y = floorY - player.h;
         player.vy = 0;
         player.grounded = true;
     }
-    if (keys[' '] && player.grounded) { player.vy = -10; player.grounded = false; }
 
-    draw();
-    requestAnimationFrame(update);
-}
-
-function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
 
+    // Draw World
     for (let x = 0; x < COLS; x++) {
         for (let y = 0; y < ROWS; y++) {
             let id = world[x][y];
             if (id !== 0) ctx.drawImage(blocksTex[id], x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
     }
+    // Draw Steve
     ctx.drawImage(blocksTex['steve'], player.x, player.y, player.w, player.h);
+
+    requestAnimationFrame(update);
 }
 
-// --- 4. TOUCH CONTROLS ---
-canvas.ontouchstart = (e) => {
-    let tx = e.touches[0].clientX;
-    if (tx < canvas.width / 3) player.vx = -10;
-    else if (tx > (canvas.width / 3) * 2) player.vx = 10;
-    else if (player.grounded) { player.vy = -12; player.grounded = false; }
+// Mining & Building on Touch
+canvas.addEventListener('touchstart', (e) => {
+    let rect = canvas.getBoundingClientRect();
+    let x = e.touches[0].clientX - rect.left;
+    let y = e.touches[0].clientY - rect.top;
     
-    // Tap to build/mine
-    let ty = e.touches[0].clientY;
-    let gx = Math.floor(tx / TILE_SIZE);
-    let gy = Math.floor(ty / TILE_SIZE);
-    if(world[gx]) world[gx][gy] = (world[gx][gy] === 0) ? selectedBlock : 0;
-};
+    let gx = Math.floor(x / TILE_SIZE);
+    let gy = Math.floor(y / TILE_SIZE);
 
+    if (world[gx]) {
+        if (interactionMode === 'MINE') world[gx][gy] = 0;
+        else if (world[gx][gy] === 0) world[gx][gy] = selectedBlock;
+    }
+});
+
+// Hotbar
 document.querySelectorAll('.slot').forEach(s => {
     s.onclick = () => {
         document.querySelector('.active').classList.remove('active');
@@ -140,7 +147,7 @@ document.querySelectorAll('.slot').forEach(s => {
     };
 });
 
-initTextures();
+initAssets();
 resize();
 update();
 window.onresize = resize;
