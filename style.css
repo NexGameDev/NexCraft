@@ -1,4 +1,8 @@
-* { margin:0; padding:0; box-sizing:border-box; touch-action:none; }
+* { 
+  margin:0; 
+  padding:0; 
+  box-sizing:border-box; 
+}
 
 body {
   background:#000;
@@ -7,6 +11,9 @@ body {
 
 canvas {
   display:block;
+  width:100vw;
+  height:100vh;
+  touch-action:none;
 }
 
 .controls {
