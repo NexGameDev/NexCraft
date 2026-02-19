@@ -3,13 +3,18 @@ const ctx = canvas.getContext("2d");
 
 ctx.imageSmoothingEnabled = false;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
 const TILE = 32;
 const WORLD_WIDTH = 400;
 const WORLD_HEIGHT = 80;
 const RENDER_DISTANCE = 30;
+
+// Resize canvas otomatis
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 /* =====================================================
    TEXTURES
@@ -40,7 +45,7 @@ function initTextures(){
   const g=grassCanvas.getContext("2d");
   g.drawImage(textures.dirt,0,0);
   g.fillStyle="#5fab39";
-  g.fillRect(0,0,TILE,10);
+  g.fillRect(0,0, TILE,10);
   textures.grass=grassCanvas;
 
   textures.wood=createNoiseTexture("#8B5A2B","#5C3A1E",20);
@@ -68,9 +73,9 @@ function generateWorld(){
    PLAYER
 ===================================================== */
 const player={
-  x:0,y:0,
-  width:20,height:30,
-  vx:0,vy:0,
+  x:0, y:0,
+  width:20, height:30,
+  vx:0, vy:0,
   speed:3,
   jump:-10,
   gravity:0.5,
@@ -114,17 +119,20 @@ function updateCamera(){
 /* =====================================================
    MOVEMENT + COLLISION
 ===================================================== */
-function isSolid(x,y){return world[x] && world[x][y]>0;}
+function isSolid(x,y){ return world[x] && world[x][y]>0; }
 
 function updatePlayer(){
+  // Horizontal movement
   if(keys["a"]) player.vx=-player.speed;
   else if(keys["d"]) player.vx=player.speed;
   else player.vx=0;
 
+  // Jump
   if(keys["w"] && player.grounded){ player.vy=player.jump; player.grounded=false; }
+
   player.vy+=player.gravity;
 
-  // X movement
+  // X collision
   player.x+=player.vx;
   let left=Math.floor(player.x/TILE);
   let right=Math.floor((player.x+player.width)/TILE);
@@ -134,7 +142,7 @@ function updatePlayer(){
   if(player.vx>0 && (isSolid(right,top)||isSolid(right,bottom))) player.x=right*TILE-player.width;
   if(player.vx<0 && (isSolid(left,top)||isSolid(left,bottom))) player.x=(left+1)*TILE;
 
-  // Y movement
+  // Y collision
   player.y+=player.vy;
   left=Math.floor(player.x/TILE);
   right=Math.floor((player.x+player.width-1)/TILE);
@@ -142,20 +150,29 @@ function updatePlayer(){
   bottom=Math.floor((player.y+player.height)/TILE);
 
   player.grounded=false;
-  if(player.vy>0 && (isSolid(left,bottom)||isSolid(right,bottom))){ player.y=bottom*TILE-player.height; player.vy=0; player.grounded=true; }
-  if(player.vy<0 && (isSolid(left,top)||isSolid(right,top))){ player.y=(top+1)*TILE; player.vy=0; }
+  if(player.vy>0 && (isSolid(left,bottom)||isSolid(right,bottom))){
+    player.y=bottom*TILE-player.height;
+    player.vy=0;
+    player.grounded=true;
+  }
+  if(player.vy<0 && (isSolid(left,top)||isSolid(right,top))){
+    player.y=(top+1)*TILE;
+    player.vy=0;
+  }
 
   if(player.y>WORLD_HEIGHT*TILE) spawnPlayer();
 
   // Animation
-  if(Math.abs(player.vx)>0 && player.grounded){ animTimer++; if(animTimer>WALK_SPEED){ animFrame=(animFrame+1)%4; animTimer=0; } }
-  else animFrame=0;
+  if(Math.abs(player.vx)>0 && player.grounded){
+    animTimer++;
+    if(animTimer>WALK_SPEED){ animFrame=(animFrame+1)%4; animTimer=0; }
+  } else animFrame=0;
 
   updateMining();
 }
 
 /* =====================================================
-   HUNGER & HEALTH RETRO PIXEL
+   HUNGER & HEALTH
 ===================================================== */
 let hungerTimer=0;
 function updateHunger(){
@@ -186,7 +203,7 @@ function updateMining(){
     miningProgress++;
     if(miningProgress>=MINING_SPEED){
       const {x,y}=miningBlock;
-      const type=world[x][y];
+      const type = getBlockNameFromId(world[x][y]);
       addToInventory(type,1);
       world[x][y]=0;
       miningBlock=null; miningProgress=0;
@@ -199,14 +216,19 @@ function startMining(x,y){
 }
 
 function addToInventory(type,count){
+  if(!type) return;
   const existing=player.inventory.find(i=>i.type===type);
-  if(existing) existing.count+=count; else player.inventory.push({type,count});
+  if(existing) existing.count+=count;
+  else player.inventory.push({type,count});
 }
 
 function buildBlock(x,y){
   if(world[x] && world[x][y]===0){
     const item=player.inventory[player.selectedItem];
-    if(item && item.count>0){ world[x][y]=getBlockIdFromName(item.type); item.count--; }
+    if(item && item.count>0){ 
+      world[x][y]=getBlockIdFromName(item.type); 
+      item.count--; 
+    }
   }
 }
 
@@ -216,6 +238,13 @@ function getBlockIdFromName(name){
   if(name==="wood") return 3;
   if(name==="leaves") return 4;
   return 0;
+}
+function getBlockNameFromId(id){
+  if(id===1) return "dirt";
+  if(id===2) return "grass";
+  if(id===3) return "wood";
+  if(id===4) return "leaves";
+  return null;
 }
 
 /* =====================================================
@@ -237,7 +266,6 @@ function drawWorld(){
       if(world[x][y]>0) drawBlock(world[x][y],x*TILE,y*TILE);
     }
   }
-  // highlight mining block
   if(miningBlock){
     ctx.strokeStyle="yellow";
     ctx.lineWidth=2;
@@ -249,14 +277,14 @@ function drawWorld(){
 
 function drawPlayer(){
   const x=player.x, y=player.y;
-  ctx.fillStyle="#ffcc99"; ctx.fillRect(x+4,y,12,10); // head
-  ctx.fillStyle="#00aaaa"; ctx.fillRect(x+3,y+10,14,10); // body
-  ctx.fillStyle="#ffcc99"; // arms
+  ctx.fillStyle="#ffcc99"; ctx.fillRect(x+4,y,12,10);
+  ctx.fillStyle="#00aaaa"; ctx.fillRect(x+3,y+10,14,10);
+  ctx.fillStyle="#ffcc99";
   if(player.grounded && Math.abs(player.vx)>0){
     if(animFrame%2===0){ ctx.fillRect(x,y+10,3,8); ctx.fillRect(x+17,y+12,3,8); }
     else{ ctx.fillRect(x,y+12,3,8); ctx.fillRect(x+17,y+10,3,8); }
   }else{ ctx.fillRect(x,y+10,3,8); ctx.fillRect(x+17,y+10,3,8); }
-  ctx.fillStyle="#0000aa"; // legs
+  ctx.fillStyle="#0000aa";
   if(!player.grounded){ ctx.fillRect(x+4,y+20,4,10); ctx.fillRect(x+12,y+20,4,10); }
   else if(Math.abs(player.vx)>0){
     if(animFrame===0){ ctx.fillRect(x+4,y+20,4,10); ctx.fillRect(x+12,y+22,4,8); }
@@ -284,6 +312,7 @@ function drawInventory(){
    GAME LOOP
 ===================================================== */
 function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle="#87CEEB"; ctx.fillRect(0,0,canvas.width,canvas.height);
   updatePlayer(); updateHunger(); updateCamera();
   ctx.save(); ctx.translate(-camera.x,-camera.y);
@@ -296,27 +325,28 @@ function gameLoop(){
    CONTROLS
 ===================================================== */
 const keys={};
-document.addEventListener("keydown",e=>{
+document.addEventListener("keydown", e => {
   keys[e.key]=true;
   if(e.key==="m") mode="mine";
   if(e.key==="b") mode="build";
   if(e.key>="1" && e.key<="9") player.selectedItem=parseInt(e.key)-1;
 });
-document.addEventListener("keyup",e=>keys[e.key]=false);
+document.addEventListener("keyup", e => { keys[e.key]=false; });
 
-canvas.addEventListener("mousedown",e=>{
+canvas.addEventListener("mousedown", e=>{
   const mouseX=Math.floor((e.clientX+camera.x)/TILE);
   const mouseY=Math.floor((e.clientY+camera.y)/TILE);
   if(mode==="mine") startMining(mouseX,mouseY);
   if(mode==="build") buildBlock(mouseX,mouseY);
 });
 
-// optional mobile buttons
+// Mobile buttons
 ["left","right","jump"].forEach(id=>{
   const btn=document.getElementById(id); if(!btn) return;
   let key=id==="left"?"a":id==="right"?"d":"w";
-  btn.addEventListener("touchstart",e=>{ e.preventDefault(); keys[key]=true; });
-  btn.addEventListener("touchend",e=>{ e.preventDefault(); keys[key]=false; });
+  btn.addEventListener("touchstart", e=>{ e.preventDefault(); keys[key]=true; });
+  btn.addEventListener("touchend", e=>{ e.preventDefault(); keys[key]=false; });
+  btn.addEventListener("touchcancel", e=>{ keys[key]=false; });
 });
 
 generateWorld(); spawnPlayer(); gameLoop();
