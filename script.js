@@ -97,6 +97,14 @@ function spawnPlayer(){
 }
 
 /* =====================================================
+   PLAYER ANIMATION (BARU)
+===================================================== */
+
+let animFrame = 0;
+let animTimer = 0;
+const WALK_SPEED = 8;
+
+/* =====================================================
    CAMERA
 ===================================================== */
 
@@ -109,13 +117,12 @@ function updateCamera(){
   camera.x+=(targetX-camera.x)*camera.smooth;
   camera.y+=(targetY-camera.y)*camera.smooth;
 
-  // batasi kamera agar tidak keluar dunia
   camera.x=Math.max(0,Math.min(camera.x,WORLD_WIDTH*TILE-canvas.width));
   camera.y=Math.max(0,Math.min(camera.y,WORLD_HEIGHT*TILE-canvas.height));
 }
 
 /* =====================================================
-   MOVEMENT + COLLISION FIX
+   MOVEMENT + COLLISION
 ===================================================== */
 
 function isSolid(x,y){
@@ -124,7 +131,6 @@ function isSolid(x,y){
 
 function updatePlayer(){
 
-  // Horizontal
   if(keys["a"]) player.vx=-player.speed;
   else if(keys["d"]) player.vx=player.speed;
   else player.vx=0;
@@ -136,7 +142,7 @@ function updatePlayer(){
 
   player.vy+=player.gravity;
 
-  // Move X
+  // X movement
   player.x+=player.vx;
 
   let left=Math.floor(player.x/TILE);
@@ -151,7 +157,7 @@ function updatePlayer(){
     player.x=(left+1)*TILE;
   }
 
-  // Move Y
+  // Y movement
   player.y+=player.vy;
 
   left=Math.floor(player.x/TILE);
@@ -172,9 +178,19 @@ function updatePlayer(){
     player.vy=0;
   }
 
-  // jangan jatuh keluar map
   if(player.y>WORLD_HEIGHT*TILE){
     spawnPlayer();
+  }
+
+  /* ===== ANIMATION CONTROL ===== */
+  if (Math.abs(player.vx) > 0 && player.grounded) {
+    animTimer++;
+    if (animTimer > WALK_SPEED) {
+      animFrame = (animFrame + 1) % 4;
+      animTimer = 0;
+    }
+  } else {
+    animFrame = 0;
   }
 }
 
@@ -225,13 +241,62 @@ function drawWorld(){
   }
 }
 
+/* ===== PLAYER RETRO PIXEL + ANIMATION ===== */
+
 function drawPlayer(){
+
+  const x = player.x;
+  const y = player.y;
+
+  // HEAD
   ctx.fillStyle="#ffcc99";
-  ctx.fillRect(player.x,player.y,player.width,player.height);
-  ctx.fillStyle="#00AAAA";
-  ctx.fillRect(player.x,player.y+10,player.width,12);
-  ctx.fillStyle="#0000AA";
-  ctx.fillRect(player.x,player.y+22,player.width,8);
+  ctx.fillRect(x+4,y,12,10);
+
+  // BODY
+  ctx.fillStyle="#00aaaa";
+  ctx.fillRect(x+3,y+10,14,10);
+
+  // ARMS
+  ctx.fillStyle="#ffcc99";
+
+  if(player.grounded && Math.abs(player.vx)>0){
+    if(animFrame%2===0){
+      ctx.fillRect(x,y+10,3,8);
+      ctx.fillRect(x+17,y+12,3,8);
+    }else{
+      ctx.fillRect(x,y+12,3,8);
+      ctx.fillRect(x+17,y+10,3,8);
+    }
+  }else{
+    ctx.fillRect(x,y+10,3,8);
+    ctx.fillRect(x+17,y+10,3,8);
+  }
+
+  // LEGS
+  ctx.fillStyle="#0000aa";
+
+  if(!player.grounded){
+    ctx.fillRect(x+4,y+20,4,10);
+    ctx.fillRect(x+12,y+20,4,10);
+  }
+  else if(Math.abs(player.vx)>0){
+    if(animFrame===0){
+      ctx.fillRect(x+4,y+20,4,10);
+      ctx.fillRect(x+12,y+22,4,8);
+    }
+    else if(animFrame===1){
+      ctx.fillRect(x+4,y+22,4,8);
+      ctx.fillRect(x+12,y+20,4,10);
+    }
+    else{
+      ctx.fillRect(x+4,y+21,4,9);
+      ctx.fillRect(x+12,y+21,4,9);
+    }
+  }
+  else{
+    ctx.fillRect(x+4,y+20,4,10);
+    ctx.fillRect(x+12,y+20,4,10);
+  }
 }
 
 /* =====================================================
@@ -266,7 +331,6 @@ const keys={};
 document.addEventListener("keydown",e=>keys[e.key]=true);
 document.addEventListener("keyup",e=>keys[e.key]=false);
 
-// optional: mobile button support
 ["left","right","jump"].forEach(id=>{
   const btn=document.getElementById(id);
   if(!btn) return;
