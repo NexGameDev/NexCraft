@@ -1,87 +1,117 @@
-* { 
-  margin:0; 
-  padding:0; 
-  box-sizing:border-box; 
-}
-
-body {
-  background:#000;
-  overflow:hidden;
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #87CEEB;
+  font-family: monospace;
+  touch-action: none;
 }
 
 canvas {
-  display:block;
-  width:100vw;
-  height:100vh;
-  touch-action:none;
+  display: block;
+  background: #87CEEB;
 }
 
-/* CONTROLS */
-.controls-left {
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  display:flex;
-  gap:20px;
+/* ===== Tombol kontrol ===== */
+.button {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  user-select: none;
 }
 
-.controls-right {
-  position:fixed;
-  bottom:20px;
-  right:20px;
+#left { left: 20px; bottom: 20px; }
+#right { left: 100px; bottom: 20px; }
+#jump { right: 20px; bottom: 20px; }
+
+/* ===== Tombol mode ===== */
+.modeButton {
+  position: fixed;
+  width: 80px;
+  height: 50px;
+  border-radius: 10px;
+  background: rgba(255,165,0,0.8);
+  color: black;
+  font-size: 18px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
 }
 
-button {
-  width:70px;
-  height:70px;
-  border:none;
-  border-radius:15px;
-  background:#333;
-  color:white;
-  font-size:24px;
-}
+#btnMine { bottom: 140px; right: 20px; }
+#btnBuild { bottom: 200px; right: 20px; }
 
-/* INVENTORY */
+/* ===== Inventory mobile ===== */
 #inventory {
-  position:fixed;
-  bottom:110px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:10px;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 10px 10px 0 0;
+  z-index: 10;
 }
 
-.slot {
-  width:55px;
-  height:55px;
-  background:#222;
-  border:2px solid #555;
-  color:white;
-  font-size:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
+/* Inventory slot */
+.invSlot {
+  width: 40px;
+  height: 40px;
+  background: #222;
+  border: 2px solid #555;
+  position: relative;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
 }
 
-/* STATUS */
+.invSlot.selected {
+  border-color: yellow;
+  border-width: 3px;
+}
+
+/* Item count di slot */
+.invCount {
+  position: absolute;
+  bottom: 0;
+  right: 2px;
+  color: white;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ===== Status (health/hunger) ===== */
 #status {
-  position:fixed;
-  top:15px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  align-items:center;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-#hearts, #hunger {
-  display:flex;
-  gap:4px;
+.statusRow {
+  display: flex;
+  gap: 2px;
 }
-
-.heart, .food {
-  width:20px;
-  height:20px;
+.statusPixel {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #333;
 }
