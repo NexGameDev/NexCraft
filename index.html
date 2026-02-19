@@ -2,33 +2,174 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Minecraft 2D</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retro Pixel Game</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #87CEEB;
+    font-family: monospace;
+  }
+
+  canvas {
+    display: block;
+    background: #87CEEB;
+  }
+
+  /* Tombol kontrol mobile */
+  .button {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    user-select: none;
+    touch-action: none;
+  }
+
+  #left { left: 20px; bottom: 20px; }
+  #right { left: 100px; bottom: 20px; }
+  #jump { right: 20px; bottom: 20px; }
+
+  /* Tombol mode */
+  .modeButton {
+    position: fixed;
+    width: 80px;
+    height: 50px;
+    border-radius: 10px;
+    background: rgba(255,165,0,0.8);
+    color: black;
+    font-size: 18px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  #btnMine { bottom: 140px; right: 20px; }
+  #btnBuild { bottom: 200px; right: 20px; }
+
+  /* Inventory mobile */
+  #inventory {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 10px 10px 0 0;
+    z-index: 10;
+  }
+
+  .invSlot {
+    width: 40px;
+    height: 40px;
+    background: #222;
+    border: 2px solid #555;
+    position: relative;
+    border-radius: 4px;
+    touch-action: none;
+  }
+
+  .invSlot.selected {
+    border-color: yellow;
+    border-width: 3px;
+  }
+
+  .invCount {
+    position: absolute;
+    bottom: 0;
+    right: 2px;
+    color: white;
+    font-size: 14px;
+  }
+</style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 
-<!-- LEFT CONTROLS -->
-<div class="controls-left">
-  <button id="left">◀</button>
-  <button id="right">▶</button>
-</div>
+<!-- Tombol mobile -->
+<div id="left" class="button">&#9664;</div>
+<div id="right" class="button">&#9654;</div>
+<div id="jump" class="button">&#9650;</div>
 
-<!-- RIGHT CONTROLS -->
-<div class="controls-right">
-  <button id="jump">▲</button>
-</div>
+<!-- Tombol mode -->
+<div id="btnMine" class="modeButton">Mine</div>
+<div id="btnBuild" class="modeButton">Build</div>
 
-<!-- STATUS BARS -->
-<div id="status">
-  <div id="hearts"></div>
-  <div id="hunger"></div>
-</div>
-
+<!-- Inventory mobile -->
 <div id="inventory"></div>
 
-<script src="script.js"></script>
+<script src="game.js"></script>
+<script>
+  // Tombol mode
+  document.getElementById("btnMine").addEventListener("click",()=>{ mode="mine"; });
+  document.getElementById("btnBuild").addEventListener("click",()=>{ mode="build"; });
+
+  // Tombol kontrol mobile
+  const keys={};
+  const mapKeys={"left":"a","right":"d","jump":"w"};
+  ["left","right","jump"].forEach(id=>{
+    const btn=document.getElementById(id);
+    btn.addEventListener("touchstart",e=>{ e.preventDefault(); keys[mapKeys[id]]=true; });
+    btn.addEventListener("touchend",e=>{ e.preventDefault(); keys[mapKeys[id]]=false; });
+  });
+
+  // Inventory rendering & selection
+  const invDiv=document.getElementById("inventory");
+
+  function renderInventory(){
+    invDiv.innerHTML="";
+    player.inventory.forEach((item,i)=>{
+      const slot=document.createElement("div");
+      slot.classList.add("invSlot");
+      if(i===player.selectedItem) slot.classList.add("selected");
+
+      // block icon
+      const icon=document.createElement("canvas");
+      icon.width=32; icon.height=32;
+      const ic=icon.getContext("2d");
+      if(item.type==="dirt") ic.fillStyle="#6b4226";
+      if(item.type==="grass") ic.fillStyle="#5fab39";
+      if(item.type==="wood") ic.fillStyle="#8B5A2B";
+      if(item.type==="leaves") ic.fillStyle="#2e8b57";
+      ic.fillRect(0,0,32,32);
+      slot.appendChild(icon);
+
+      // count
+      const count=document.createElement("div");
+      count.className="invCount";
+      count.innerText=item.count;
+      slot.appendChild(count);
+
+      // tap to select
+      slot.addEventListener("click",()=>{ player.selectedItem=i; renderInventory(); });
+
+      invDiv.appendChild(slot);
+    });
+  }
+
+  // update inventory setiap frame
+  function updateInventoryMobile(){
+    renderInventory();
+  }
+
+  // panggil ini di game loop
+  window.updateInventoryMobile=updateInventoryMobile;
+</script>
+
 </body>
 </html>
