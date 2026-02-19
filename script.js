@@ -83,7 +83,9 @@ const player={
   gravity:0.5,
   grounded:false,
   health:10,
-  hunger:10
+  hunger:10,
+  inventory:[], // {type:"grass", count:1}
+  selectedItem:0
 };
 
 function spawnPlayer(){
@@ -97,7 +99,7 @@ function spawnPlayer(){
 }
 
 /* =====================================================
-   PLAYER ANIMATION (BARU)
+   PLAYER ANIMATION
 ===================================================== */
 
 let animFrame = 0;
@@ -144,7 +146,6 @@ function updatePlayer(){
 
   // X movement
   player.x+=player.vx;
-
   let left=Math.floor(player.x/TILE);
   let right=Math.floor((player.x+player.width)/TILE);
   let top=Math.floor(player.y/TILE);
@@ -159,7 +160,6 @@ function updatePlayer(){
 
   // Y movement
   player.y+=player.vy;
-
   left=Math.floor(player.x/TILE);
   right=Math.floor((player.x+player.width-1)/TILE);
   top=Math.floor(player.y/TILE);
@@ -182,20 +182,20 @@ function updatePlayer(){
     spawnPlayer();
   }
 
-  /* ===== ANIMATION CONTROL ===== */
+  // Animation
   if (Math.abs(player.vx) > 0 && player.grounded) {
     animTimer++;
     if (animTimer > WALK_SPEED) {
       animFrame = (animFrame + 1) % 4;
       animTimer = 0;
     }
-  } else {
-    animFrame = 0;
-  }
+  } else animFrame = 0;
+
+  updateMining();
 }
 
 /* =====================================================
-   HUNGER SYSTEM
+   HUNGER & HEALTH RETRO PIXEL
 ===================================================== */
 
 let hungerTimer=0;
@@ -214,6 +214,75 @@ function updateHunger(){
   if(player.hunger>6 && player.health<10){
     player.health=Math.min(10,player.health+0.02);
   }
+}
+
+function drawStatus(){
+  // hearts
+  for(let i=0;i<10;i++){
+    ctx.fillStyle=i<player.health?"red":"#333";
+    ctx.fillRect(10+i*18,10,16,16);
+  }
+
+  // hunger
+  for(let i=0;i<10;i++){
+    ctx.fillStyle=i<player.hunger?"orange":"#333";
+    ctx.fillRect(10+i*18,30,16,16);
+  }
+}
+
+/* =====================================================
+   MINING & BUILDING
+===================================================== */
+
+let miningBlock=null;
+let miningProgress=0;
+const MINING_SPEED=50; // frames to break
+
+let mode="mine"; // or "build"
+
+function updateMining(){
+  if(miningBlock){
+    miningProgress++;
+    if(miningProgress>=MINING_SPEED){
+      const {x,y} = miningBlock;
+      const type = world[x][y];
+      addToInventory(type,1);
+      world[x][y]=0;
+      miningBlock=null;
+      miningProgress=0;
+    }
+  }
+}
+
+function startMining(x,y){
+  if(world[x] && world[x][y]>0){
+    miningBlock={x,y};
+    miningProgress=0;
+  }
+}
+
+function addToInventory(type,count){
+  const existing = player.inventory.find(i=>i.type===type);
+  if(existing) existing.count+=count;
+  else player.inventory.push({type,count});
+}
+
+function buildBlock(x,y){
+  if(world[x] && world[x][y]===0){
+    const item = player.inventory[player.selectedItem];
+    if(item && item.count>0){
+      world[x][y]=getBlockIdFromName(item.type);
+      item.count--;
+    }
+  }
+}
+
+function getBlockIdFromName(name){
+  if(name==="dirt") return 1;
+  if(name==="grass") return 2;
+  if(name==="wood") return 3;
+  if(name==="leaves") return 4;
+  return 0;
 }
 
 /* =====================================================
@@ -241,24 +310,16 @@ function drawWorld(){
   }
 }
 
-/* ===== PLAYER RETRO PIXEL + ANIMATION ===== */
-
 function drawPlayer(){
+  const x=player.x,y=player.y;
 
-  const x = player.x;
-  const y = player.y;
-
-  // HEAD
-  ctx.fillStyle="#ffcc99";
+  ctx.fillStyle="#ffcc99"; // head
   ctx.fillRect(x+4,y,12,10);
 
-  // BODY
-  ctx.fillStyle="#00aaaa";
+  ctx.fillStyle="#00aaaa"; // body
   ctx.fillRect(x+3,y+10,14,10);
 
-  // ARMS
-  ctx.fillStyle="#ffcc99";
-
+  ctx.fillStyle="#ffcc99"; // arms
   if(player.grounded && Math.abs(player.vx)>0){
     if(animFrame%2===0){
       ctx.fillRect(x,y+10,3,8);
@@ -272,14 +333,11 @@ function drawPlayer(){
     ctx.fillRect(x+17,y+10,3,8);
   }
 
-  // LEGS
-  ctx.fillStyle="#0000aa";
-
+  ctx.fillStyle="#0000aa"; // legs
   if(!player.grounded){
     ctx.fillRect(x+4,y+20,4,10);
     ctx.fillRect(x+12,y+20,4,10);
-  }
-  else if(Math.abs(player.vx)>0){
+  }else if(Math.abs(player.vx)>0){
     if(animFrame===0){
       ctx.fillRect(x+4,y+20,4,10);
       ctx.fillRect(x+12,y+22,4,8);
@@ -292,10 +350,38 @@ function drawPlayer(){
       ctx.fillRect(x+4,y+21,4,9);
       ctx.fillRect(x+12,y+21,4,9);
     }
-  }
-  else{
+  }else{
     ctx.fillRect(x+4,y+20,4,10);
     ctx.fillRect(x+12,y+20,4,10);
+  }
+}
+
+/* INVENTORY DRAW */
+function drawInventory(){
+  for(let i=0;i<player.inventory.length;i++){
+    const item = player.inventory[i];
+    const x = 10+i*36;
+    const y = canvas.height-50;
+    ctx.fillStyle="black";
+    ctx.fillRect(x-2,y-2,34,34);
+
+    // Draw block icon
+    if(item.type==="dirt") ctx.drawImage(textures.dirt,x,y);
+    if(item.type==="grass") ctx.drawImage(textures.grass,x,y);
+    if(item.type==="wood") ctx.drawImage(textures.wood,x,y);
+    if(item.type==="leaves") ctx.drawImage(textures.leaves,x,y);
+
+    // Count
+    ctx.fillStyle="white";
+    ctx.font="16px monospace";
+    ctx.fillText(item.count,x+2,y+24);
+
+    // highlight selected
+    if(i===player.selectedItem){
+      ctx.strokeStyle="yellow";
+      ctx.lineWidth=2;
+      ctx.strokeRect(x-2,y-2,34,34);
+    }
   }
 }
 
@@ -319,6 +405,9 @@ function gameLoop(){
 
   ctx.restore();
 
+  drawStatus();
+  drawInventory();
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -328,23 +417,34 @@ function gameLoop(){
 
 const keys={};
 
-document.addEventListener("keydown",e=>keys[e.key]=true);
+document.addEventListener("keydown",e=>{
+  keys[e.key]=true;
+
+  // switch modes
+  if(e.key==="m") mode="mine";
+  if(e.key==="b") mode="build";
+
+  // inventory selection
+  if(e.key>="1" && e.key<="9") player.selectedItem=parseInt(e.key)-1;
+});
+
 document.addEventListener("keyup",e=>keys[e.key]=false);
 
+canvas.addEventListener("mousedown",e=>{
+  const mouseX = Math.floor((e.clientX+camera.x)/TILE);
+  const mouseY = Math.floor((e.clientY+camera.y)/TILE);
+
+  if(mode==="mine") startMining(mouseX,mouseY);
+  if(mode==="build") buildBlock(mouseX,mouseY);
+});
+
+// touch controls optional
 ["left","right","jump"].forEach(id=>{
   const btn=document.getElementById(id);
   if(!btn) return;
-
   let key=id==="left"?"a":id==="right"?"d":"w";
-
-  btn.addEventListener("touchstart",e=>{
-    e.preventDefault();
-    keys[key]=true;
-  });
-  btn.addEventListener("touchend",e=>{
-    e.preventDefault();
-    keys[key]=false;
-  });
+  btn.addEventListener("touchstart",e=>{ e.preventDefault(); keys[key]=true; });
+  btn.addEventListener("touchend",e=>{ e.preventDefault(); keys[key]=false; });
 });
 
 generateWorld();
